@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'cases.dart'; // Ensure this defines CaseItem and caseList with unique IDs
+import 'cases.dart' as pharma; // Prefix for pharmacology import
+import 'cases2.dart' as clinical; // Prefix for clinical pharmacy import
 
 void main() {
   runApp(const FloatingCaseApp());
@@ -12,7 +13,7 @@ class FloatingCaseApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'كيسات عل طاير',
+      title: 'امسيكيو عل طاير',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: Colors.black,
@@ -31,37 +32,420 @@ class FloatingCaseApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const FloatingCaseHome(),
+      home: const SubjectSelectionScreen(),
+    );
+  }
+}
+
+class SubjectSelectionScreen extends StatelessWidget {
+  const SubjectSelectionScreen({super.key});
+
+  Widget _buildSubjectCard(BuildContext context, String title, IconData icon, VoidCallback onTap) {
+    return Card(
+      color: const Color(0xFF0C0F0C),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.greenAccent.withAlpha(64)),
+      ),
+      elevation: 4,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: Colors.greenAccent, size: 48),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withAlpha(242),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Directionality(
+          textDirection: TextDirection.rtl,
+          child: Text('اختر المادة'),
+        ),
+      ),
+      body: Stack(
+        children: [
+          Positioned.fill(child: FloatingBubbles(count: 22)),
+          Center(
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      _buildSubjectCard(
+                        context,
+                        'Pharmacology | علم الأدوية',
+                        Icons.medical_services,
+                        () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => PharmacologyCategoryScreen(
+                                caseList: pharma.pharmacologyCaseList,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      _buildSubjectCard(
+                        context,
+                        'Clinical Phmarmacy | سريرية',
+                        Icons.person,
+                        () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => ClinicalCategoryScreen(
+                                caseList: clinical.clinicalCaseList,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class PharmacologyCategoryScreen extends StatelessWidget {
+  final List<pharma.CaseItem> caseList;
+  
+  const PharmacologyCategoryScreen({super.key, required this.caseList});
+
+  IconData _getIconForCategory(pharma.PharmacologyCategory category) {
+    switch (category) {
+      case pharma.PharmacologyCategory.nsaids: return Icons.medication;
+      case pharma.PharmacologyCategory.rheumatology: return Icons.accessibility;
+      case pharma.PharmacologyCategory.bone: return Icons.accessible;
+      case pharma.PharmacologyCategory.diabetes: return Icons.monitor_heart;
+      case pharma.PharmacologyCategory.cancer: return Icons.healing;
+      case pharma.PharmacologyCategory.hormones: return Icons.health_and_safety;
+      case pharma.PharmacologyCategory.miscellaneous: return Icons.help_outline;
+    }
+  }
+
+  Widget _buildCategoryCard(BuildContext context, pharma.PharmacologyCategory category) {
+    final questionCount = caseList.where((c) => c.categories.contains(category)).length;
+    
+    return Card(
+      color: const Color(0xFF0C0F0C),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.greenAccent.withAlpha(64)),
+      ),
+      elevation: 4,
+      child: InkWell(
+        onTap: () {
+          final filteredCases = caseList.where((c) => c.categories.contains(category)).toList();
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => FloatingCaseHome(
+                title: category.displayName,
+                caseList: filteredCases,
+              ),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(_getIconForCategory(category)),
+              const SizedBox(height: 12),
+              Text(
+                category.displayName,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withAlpha(242),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '$questionCount أسئلة',
+                style: TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAllCategoriesCard(BuildContext context) {
+    return Card(
+      color: const Color(0xFF0C0F0C),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.greenAccent.withAlpha(64)),
+      ),
+      elevation: 4,
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => FloatingCaseHome(
+                title: 'كل فصول علم الأدوية',
+                caseList: caseList,
+              ),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.all_inclusive, color: Colors.greenAccent, size: 32),
+              const SizedBox(width: 12),
+              Text(
+                'كل الأسئلة',
+                style: TextStyle(
+                  color: Colors.white.withAlpha(242),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Directionality(
+          textDirection: TextDirection.rtl,
+          child: Text('اختر الفصل في علم الأدوية'),
+        ),
+      ),
+      body: Stack(
+        children: [
+          Positioned.fill(child: FloatingBubbles(count: 22)),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.9,
+                children: [
+                  for (final category in pharma.PharmacologyCategory.values)
+                    _buildCategoryCard(context, category),
+                  _buildAllCategoriesCard(context),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ClinicalCategoryScreen extends StatelessWidget {
+  final List<clinical.CaseItem> caseList;
+  
+  const ClinicalCategoryScreen({super.key, required this.caseList});
+
+  IconData _getIconForCategory(clinical.ClinicalCategory category) {
+    switch (category) {
+      case clinical.ClinicalCategory.cardiovascular: return Icons.favorite;
+      case clinical.ClinicalCategory.endocrine: return Icons.monitor_heart;
+      case clinical.ClinicalCategory.respiratory: return Icons.air;
+      case clinical.ClinicalCategory.boneJoint: return Icons.accessible;
+      case clinical.ClinicalCategory.infectious: return Icons.coronavirus;
+      case clinical.ClinicalCategory.gi: return Icons.fastfood;
+      case clinical.ClinicalCategory.hematologic: return Icons.water_drop;
+      case clinical.ClinicalCategory.miscellaneous: return Icons.help_outline;
+    }
+  }
+
+  Widget _buildCategoryCard(BuildContext context, clinical.ClinicalCategory category) {
+    final questionCount = caseList.where((c) => c.categories.contains(category)).length;
+    
+    return Card(
+      color: const Color(0xFF0C0F0C),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.greenAccent.withAlpha(64)),
+      ),
+      elevation: 4,
+      child: InkWell(
+        onTap: () {
+          final filteredCases = caseList.where((c) => c.categories.contains(category)).toList();
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => FloatingCaseHome(
+                title: category.displayName,
+                caseList: filteredCases,
+              ),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(_getIconForCategory(category)),
+              const SizedBox(height: 12),
+              Text(
+                category.displayName,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withAlpha(242),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '$questionCount أسئلة',
+                style: TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAllCategoriesCard(BuildContext context) {
+    return Card(
+      color: const Color(0xFF0C0F0C),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.greenAccent.withAlpha(64)),
+      ),
+      elevation: 4,
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => FloatingCaseHome(
+                title: 'كل فصول الصيدلة السريرية',
+                caseList: caseList,
+              ),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.all_inclusive, color: Colors.greenAccent, size: 32),
+              const SizedBox(width: 12),
+              Text(
+                'كل الأسئلة',
+                style: TextStyle(
+                  color: Colors.white.withAlpha(242),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Directionality(
+          textDirection: TextDirection.rtl,
+          child: Text('اختر الفصل في الصيدلة السريرية'),
+        ),
+      ),
+      body: Stack(
+        children: [
+          Positioned.fill(child: FloatingBubbles(count: 22)),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.9,
+                children: [
+                  for (final category in clinical.ClinicalCategory.values)
+                    _buildCategoryCard(context, category),
+                  _buildAllCategoriesCard(context),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class FloatingCaseHome extends StatefulWidget {
-  const FloatingCaseHome({super.key});
+  final String title;
+  final List<dynamic> caseList;
+
+  const FloatingCaseHome({super.key, required this.title, required this.caseList});
 
   @override
   State<FloatingCaseHome> createState() => _FloatingCaseHomeState();
 }
 
-class _FloatingCaseHomeState extends State<FloatingCaseHome>
-    with SingleTickerProviderStateMixin {
+class _FloatingCaseHomeState extends State<FloatingCaseHome> with SingleTickerProviderStateMixin {
   final _rand = Random();
-
-  // Current case and interaction state
-  CaseItem? _current;
+  dynamic _current;
   int? _selectedIndex;
   bool _answered = false;
-
-  // Review mode disables answering and shows stored selection from history
   bool _isReview = false;
-
-  // Track remaining unsolved case IDs (no repetition after solving)
   late Set<int> _remainingIds;
-
-  // Solved history list
   final List<SolvedCase> _history = [];
-
-  // Completion flag
   bool _completedRun = false;
 
   @override
@@ -71,7 +455,8 @@ class _FloatingCaseHomeState extends State<FloatingCaseHome>
   }
 
   void _resetPool() {
-    _remainingIds = caseList.map((c) => c.id).toSet();
+    _remainingIds = widget.caseList.map<int>((c) => c.id).toSet();
+    _history.clear();
     _completedRun = false;
     _current = null;
     _selectedIndex = null;
@@ -80,24 +465,19 @@ class _FloatingCaseHomeState extends State<FloatingCaseHome>
     setState(() {});
   }
 
-  CaseItem? _pickRandomFromRemaining() {
+  dynamic _pickRandomFromRemaining() {
     if (_remainingIds.isEmpty) return null;
     final ids = _remainingIds.toList();
     final id = ids[_rand.nextInt(ids.length)];
-    return caseList.firstWhere((c) => c.id == id);
-    // Assumes unique ids in cases.dart
+    return widget.caseList.firstWhere((c) => c.id == id);
   }
 
   void _showRandomCase() {
     final next = _pickRandomFromRemaining();
     if (next == null) {
-      // All solved
       setState(() {
         _completedRun = true;
         _current = null;
-        _selectedIndex = null;
-        _answered = false;
-        _isReview = false;
       });
       return;
     }
@@ -111,24 +491,21 @@ class _FloatingCaseHomeState extends State<FloatingCaseHome>
 
   void _selectAnswer(int index) {
     if (_current == null || _answered || _isReview) return;
-    final item = _current!;
-    final isCorrect = index == item.correctIndex;
+    final isCorrect = index == _current.correctIndex;
 
     setState(() {
       _selectedIndex = index;
       _answered = true;
 
-      // Mark as solved and add to history (only once)
-      if (_remainingIds.contains(item.id)) {
-        _remainingIds.remove(item.id);
+      if (_remainingIds.contains(_current.id)) {
+        _remainingIds.remove(_current.id);
       }
-      // Prevent duplicates in history (first solve wins)
-      final already = _history.any((h) => h.item.id == item.id);
+      final already = _history.any((h) => h.item.id == _current.id);
       if (!already) {
         _history.insert(
           0,
           SolvedCase(
-            item: item,
+            item: _current,
             selectedIndex: index,
             isCorrect: isCorrect,
             time: DateTime.now(),
@@ -139,7 +516,6 @@ class _FloatingCaseHomeState extends State<FloatingCaseHome>
   }
 
   void _reviewFromHistory(SolvedCase entry) {
-    // Show the stored selection, disable answering
     setState(() {
       _current = entry.item;
       _selectedIndex = entry.selectedIndex;
@@ -161,9 +537,12 @@ class _FloatingCaseHomeState extends State<FloatingCaseHome>
 
         return Scaffold(
           appBar: AppBar(
-            title: const Directionality(
+            title: Directionality(
               textDirection: TextDirection.rtl,
-              child: Text('كيسات عل طاير'),
+              child: Text(
+                widget.title,
+                style: const TextStyle(fontSize: 18),
+              ),
             ),
             actions: [
               if (!isWide)
@@ -184,14 +563,12 @@ class _FloatingCaseHomeState extends State<FloatingCaseHome>
                 top: false,
                 child: Row(
                   children: [
-                    // Main content
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: _buildMainContent(isWide: isWide),
                       ),
                     ),
-                    // Side history on wide screens
                     if (isWide)
                       SizedBox(
                         width: 340,
@@ -214,59 +591,59 @@ class _FloatingCaseHomeState extends State<FloatingCaseHome>
     if (_completedRun) {
       return _buildCompletionCard();
     }
-
     if (_current == null) {
       return _buildStartCard();
     }
-
-    return _buildCaseCard(_current!);
+    return _buildCaseCard(_current);
   }
 
   Widget _buildStartCard() {
     return Center(
-      child: Directionality(
-        textDirection: TextDirection.rtl,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 640),
-          child: Card(
-            color: const Color(0xFF0C0F0C),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.greenAccent.withOpacity(0.25)),
-            ),
-            elevation: 4,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.play_circle_fill, color: Colors.greenAccent, size: 56),
-                  const SizedBox(height: 12),
-                  Text(
-                    'يلة نبدي',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.95),
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
+      child: SingleChildScrollView(
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Card(
+              color: const Color(0xFF0C0F0C),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: Colors.greenAccent.withAlpha(64)),
+              ),
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.play_circle_fill, color: Colors.greenAccent, size: 56),
+                    const SizedBox(height: 12),
+                    Text(
+                      'يلة نبدي',
+                      style: TextStyle(
+                        color: Colors.white.withAlpha(242),
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'دوس حتى تعرض سؤال عشوائي.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white70, fontSize: 14.5),
-                  ),
-                  const SizedBox(height: 16),
-                  FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.greenAccent.withOpacity(0.15),
-                      foregroundColor: Colors.greenAccent,
+                    const SizedBox(height: 8),
+                    Text(
+                      'دوس حتى تعرض سؤال عشوائي.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white70, fontSize: 14.5),
                     ),
-                    onPressed: _showRandomCase,
-                    icon: const Icon(Icons.casino),
-                    label: const Text('عرض حالة'),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.greenAccent.withAlpha(38),
+                        foregroundColor: Colors.greenAccent,
+                      ),
+                      onPressed: _showRandomCase,
+                      icon: const Icon(Icons.casino),
+                      label: const Text('عرض حالة'),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -277,49 +654,51 @@ class _FloatingCaseHomeState extends State<FloatingCaseHome>
 
   Widget _buildCompletionCard() {
     return Center(
-      child: Directionality(
-        textDirection: TextDirection.rtl,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 680),
-          child: Card(
-            color: const Color(0xFF0C0F0C),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.greenAccent.withOpacity(0.25)),
-            ),
-            elevation: 4,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.emoji_events, color: Colors.greenAccent, size: 56),
-                  const SizedBox(height: 12),
-                  Text(
-                    'عفية سجاج👏, خلصت كل الأسئلة',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.95),
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
+      child: SingleChildScrollView(
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: Card(
+              color: const Color(0xFF0C0F0C),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: Colors.greenAccent.withAlpha(64)),
+              ),
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.emoji_events, color: Colors.greenAccent, size: 56),
+                    const SizedBox(height: 12),
+                    Text(
+                      'عفية سجاج👏, خلصت كل الأسئلة',
+                      style: TextStyle(
+                        color: Colors.white.withAlpha(242),
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'تريد تبدا من جديد؟',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white70, fontSize: 14.5),
-                  ),
-                  const SizedBox(height: 16),
-                  FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.greenAccent.withOpacity(0.15),
-                      foregroundColor: Colors.greenAccent,
+                    const SizedBox(height: 8),
+                    const Text(
+                      'تريد تبدا من جديد؟',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white70, fontSize: 14.5),
                     ),
-                    onPressed: _resetPool,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text(' أبدا من جديد'),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.greenAccent.withAlpha(38),
+                        foregroundColor: Colors.greenAccent,
+                      ),
+                      onPressed: _resetPool,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text(' أبدا من جديد'),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -328,7 +707,7 @@ class _FloatingCaseHomeState extends State<FloatingCaseHome>
     );
   }
 
-  Widget _buildCaseCard(CaseItem caseItem) {
+  Widget _buildCaseCard(dynamic caseItem) {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Align(
@@ -339,15 +718,14 @@ class _FloatingCaseHomeState extends State<FloatingCaseHome>
             color: const Color(0xFF0C0F0C),
             elevation: 4,
             shape: RoundedRectangleBorder(
-              side: BorderSide(color: Colors.greenAccent.withOpacity(0.25)),
+              side: BorderSide(color: Colors.greenAccent.withAlpha(64)),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 12),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Question
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -366,7 +744,6 @@ class _FloatingCaseHomeState extends State<FloatingCaseHome>
                     ],
                   ),
                   const SizedBox(height: 16),
-                  // Options
                   ...List.generate(caseItem.options.length, (i) {
                     final isCorrect = i == caseItem.correctIndex;
                     final isSelected = i == _selectedIndex;
@@ -377,15 +754,15 @@ class _FloatingCaseHomeState extends State<FloatingCaseHome>
 
                     if (showState && isCorrect) {
                       border = Colors.greenAccent;
-                      fill = Colors.greenAccent.withOpacity(0.12);
+                      fill = Colors.greenAccent.withAlpha(30);
                       icon = Icons.check_circle;
                     } else if (showState && isSelected && !isCorrect) {
                       border = Colors.redAccent;
-                      fill = Colors.redAccent.withOpacity(0.12);
+                      fill = Colors.redAccent.withAlpha(30);
                       icon = Icons.cancel;
                     } else {
                       border = Colors.white10;
-                      fill = Colors.white.withOpacity(0.03);
+                      fill = Colors.white.withAlpha(8);
                       icon = null;
                     }
 
@@ -406,7 +783,7 @@ class _FloatingCaseHomeState extends State<FloatingCaseHome>
                               if (icon != null)
                                 Icon(icon, color: isCorrect ? Colors.greenAccent : Colors.redAccent)
                               else
-                                Icon(Icons.radio_button_unchecked, color: Colors.white38),
+                                const Icon(Icons.radio_button_unchecked, color: Colors.white38),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
@@ -421,7 +798,6 @@ class _FloatingCaseHomeState extends State<FloatingCaseHome>
                     );
                   }),
                   const SizedBox(height: 8),
-                  // Feedback
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 250),
                     child: !_answered
@@ -439,13 +815,9 @@ class _FloatingCaseHomeState extends State<FloatingCaseHome>
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                (_selectedIndex == caseItem.correctIndex)
-                                    ? 'إجابة صحيحة!'
-                                    : 'إجابة غير صحيحة',
+                                (_selectedIndex == caseItem.correctIndex) ? 'إجابة صحيحة!' : 'إجابة غير صحيحة',
                                 style: TextStyle(
-                                  color: (_selectedIndex == caseItem.correctIndex)
-                                      ? Colors.greenAccent
-                                      : Colors.redAccent,
+                                  color: (_selectedIndex == caseItem.correctIndex) ? Colors.greenAccent : Colors.redAccent,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -453,26 +825,21 @@ class _FloatingCaseHomeState extends State<FloatingCaseHome>
                               if (_isReview)
                                 const Padding(
                                   padding: EdgeInsets.only(right: 8),
-                                  child: Text(
-                                    ' — عرض من السجل',
-                                    style: TextStyle(color: Colors.white54),
-                                  ),
+                                  child: Text(' — عرض من السجل', style: TextStyle(color: Colors.white54)),
                                 ),
                             ],
                           ),
                   ),
                   const SizedBox(height: 12),
-                  // Explanation
                   AnimatedCrossFade(
                     duration: const Duration(milliseconds: 250),
-                    crossFadeState:
-                        _answered ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                    crossFadeState: _answered ? CrossFadeState.showFirst : CrossFadeState.showSecond,
                     firstChild: Align(
                       alignment: Alignment.centerRight,
                       child: Text(
                         'الشرح: ${caseItem.explanation}',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withAlpha(229),
                           fontSize: 14.5,
                         ),
                       ),
@@ -480,32 +847,20 @@ class _FloatingCaseHomeState extends State<FloatingCaseHome>
                     secondChild: const SizedBox.shrink(),
                   ),
                   const SizedBox(height: 12),
-                  // Actions
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       TextButton.icon(
                         onPressed: _showRandomCase,
                         icon: const Icon(Icons.autorenew, color: Colors.greenAccent),
-                        label: const Text(
-                          'حالة أخرى',
-                          style: TextStyle(color: Colors.greenAccent),
-                        ),
+                        label: const Text('حالة أخرى', style: TextStyle(color: Colors.greenAccent)),
                       ),
                       TextButton.icon(
                         onPressed: () {
-                          setState(() {
-                            _current = null;
-                            _selectedIndex = null;
-                            _answered = false;
-                            _isReview = false;
-                          });
+                          setState(() { _current = null; });
                         },
                         icon: const Icon(Icons.visibility_off, color: Colors.white70),
-                        label: const Text(
-                          'إخفاء',
-                          style: TextStyle(color: Colors.white70),
-                        ),
+                        label: const Text('إخفاء', style: TextStyle(color: Colors.white70)),
                       ),
                     ],
                   ),
@@ -519,12 +874,8 @@ class _FloatingCaseHomeState extends State<FloatingCaseHome>
   }
 }
 
-/* ============================
-   History types + widgets
-   ============================ */
-
 class SolvedCase {
-  final CaseItem item;
+  final dynamic item;
   final int selectedIndex;
   final bool isCorrect;
   final DateTime time;
@@ -616,17 +967,13 @@ class _HistoryDrawer extends StatelessWidget {
       backgroundColor: const Color(0xFF0B0D0B),
       child: SafeArea(
         child: _HistoryPanel(history: history, onTap: (h) {
-          Navigator.of(context).maybePop(); // close the drawer
+          Navigator.of(context).maybePop();
           onTap(h);
         }),
       ),
     );
   }
 }
-
-/* ============================
-   Animated background
-   ============================ */
 
 class FloatingBubbles extends StatefulWidget {
   const FloatingBubbles({super.key, this.count = 22});
@@ -636,8 +983,7 @@ class FloatingBubbles extends StatefulWidget {
   State<FloatingBubbles> createState() => _FloatingBubblesState();
 }
 
-class _FloatingBubblesState extends State<FloatingBubbles>
-    with SingleTickerProviderStateMixin {
+class _FloatingBubblesState extends State<FloatingBubbles> with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final List<_BubbleSeed> _seeds;
   final _rand = Random();
@@ -648,18 +994,18 @@ class _FloatingBubblesState extends State<FloatingBubbles>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 18),
-    )..addListener(() {
+    )
+      ..addListener(() {
         setState(() {});
       })
       ..repeat();
 
     _seeds = List.generate(widget.count, (i) {
-      final radius = _rand.nextDouble() * 18 + 8; // 8..26
-      final speed = _rand.nextDouble() * 1.2 + 0.4; // 0.4..1.6
-      final amp = _rand.nextDouble() * 40 + 20; // 20..60 px
+      final radius = _rand.nextDouble() * 18 + 8;
+      final speed = _rand.nextDouble() * 1.2 + 0.4;
+      final amp = _rand.nextDouble() * 40 + 20;
       final phase = _rand.nextDouble() * pi * 2;
-      final color =
-          Colors.greenAccent.withOpacity(0.12 + _rand.nextDouble() * 0.22);
+      final color = Colors.greenAccent.withAlpha(38 + _rand.nextInt(58));
       return _BubbleSeed(
         baseX: _rand.nextDouble(),
         baseY: _rand.nextDouble(),
@@ -691,8 +1037,8 @@ class _FloatingBubblesState extends State<FloatingBubbles>
 }
 
 class _BubbleSeed {
-  final double baseX; // 0..1
-  final double baseY; // 0..1
+  final double baseX;
+  final double baseY;
   final double radius;
   final double speed;
   final double amplitude;
@@ -711,7 +1057,7 @@ class _BubbleSeed {
 }
 
 class _BubblesPainter extends CustomPainter {
-  final double time; // seconds
+  final double time;
   final List<_BubbleSeed> seeds;
 
   _BubblesPainter({required this.time, required this.seeds});
@@ -722,12 +1068,8 @@ class _BubblesPainter extends CustomPainter {
     canvas.drawRect(Offset.zero & size, bg);
 
     for (final s in seeds) {
-      // Use time instead of t for seamless looping
-      final cx = s.baseX * size.width +
-          sin((time * s.speed) + s.phase) * s.amplitude;
-      final cy = s.baseY * size.height +
-          cos((time * s.speed) + s.phase) * s.amplitude;
-
+      final cx = s.baseX * size.width + sin((time * s.speed) + s.phase) * s.amplitude;
+      final cy = s.baseY * size.height + cos((time * s.speed) + s.phase) * s.amplitude;
       final bubblePaint = Paint()..color = s.color;
       canvas.drawCircle(Offset(cx, cy), s.radius, bubblePaint);
     }
